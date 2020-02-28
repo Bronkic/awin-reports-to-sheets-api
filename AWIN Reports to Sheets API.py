@@ -1,7 +1,7 @@
 # Authentication: Use setup.xlsx
 
 # Set to True to display API responses for debugging.
-include_response = True
+include_response = False
 
 import datetime
 import requests 
@@ -79,7 +79,7 @@ def exportreport(AdvertiserName, AdvertiserID, spreadsheet_ID):
             urlopenawin = "https://api.awin.com/advertisers/" + str(AdvertiserID) + "/reports/publisher?startDate=" + str(start_dateopen) + "&endDate=" + str(end_dateopen) + "&timezone=Europe/Berlin&accessToken=" + str(AwinToken)
             payloadopenawin = {}
             responseopenawin = requests.request("GET", urlopenawin, data = payloadopenawin) # Requests all sales of the month that contains open sales.
-
+            print(str(responseopenawin))
             if include_response == True:
                 print("AWIN response: " + str(responseopenawin))
             if "401" in str(responseopenawin):
@@ -239,7 +239,6 @@ def checkingsheets(spreadsheet_ID, AdvertiserName):
         formula = []
         for i in range(2,10000):
             formula += [str("=IFERROR(IF('Input Awin Publisher'!F") + str(i) + str("=0;"";ADDRESS(") + str(i) + str(",6));"")")]
-        print("formula: " + str(formula))
         
         batch_update_values_request_body6 = {
         'value_input_option': 'USER_ENTERED',  
@@ -302,7 +301,7 @@ def checkingsheets(spreadsheet_ID, AdvertiserName):
         return(sheet_id)
 
     # Exports column A to determine the current number of rows, so that new data can be appended to the current data
-def checkrows(spreadsheed_ID):
+def checkrows(spreadsheet_ID):
     range_1 = "Input Awin Publisher!A:A"
     requestrows = service.spreadsheets().values().get(spreadsheetId=spreadsheet_ID, range=range_1)
     rows = requestrows.execute()
@@ -324,49 +323,45 @@ def countdown():
     print("1")
     sleep(1)    
 
-def main():
-    # Read Setup.xlsx
-    path = ("Setup.xlsx")
-    wb = openpyxl.load_workbook(path)
+# Read Setup.xlsx
+path = ("Setup.xlsx")
+wb = openpyxl.load_workbook(path)
 
-    # Get previous month
-    today = datetime.date.today()
-    first = today.replace(day=1)
-    end_date = first - datetime.timedelta(days=1)
-    start_date = end_date.replace(day=1)
+# Get previous month
+today = datetime.date.today()
+first = today.replace(day=1)
+end_date = first - datetime.timedelta(days=1)
+start_date = end_date.replace(day=1)
 
-    # Retrieve Awin Access Token
-    sheet1 = wb["Token"]
-    cell2 = sheet1.cell(row = 2, column = 1)
-    AwinToken = cell2.value
-    print("AwinToken found.")
+# Retrieve Awin Access Token
+sheet1 = wb["Token"]
+cell2 = sheet1.cell(row = 2, column = 1)
+AwinToken = cell2.value
+print("AwinToken found.")
 
-    # Retrieve list of programs and IDs
-    sheet2 = wb["Setup"]
-    max_row=sheet2.max_row
-    max_column=sheet2.max_column
+# Retrieve list of programs and IDs
+sheet2 = wb["Setup"]
+max_row=sheet2.max_row
+max_column=sheet2.max_column
 
-    for i in range(2, max_row+1):
-        cell_AdvertiserID = sheet2.cell(row = i, column = 1)
-        cell_AdvertiserName = sheet2.cell(row = i, column = 2)
-        cell_spreadsheetID = sheet2.cell(row = i, column = 3)
-        spreadsheet_ID = cell_spreadsheetID.value
-        AdvertiserName = cell_AdvertiserName.value
-        AdvertiserID = cell_AdvertiserID.value
+for i in range(2, max_row+1):
+    cell_AdvertiserID = sheet2.cell(row = i, column = 1)
+    cell_AdvertiserName = sheet2.cell(row = i, column = 2)
+    cell_spreadsheetID = sheet2.cell(row = i, column = 3)
+    spreadsheet_ID = cell_spreadsheetID.value
+    AdvertiserName = cell_AdvertiserName.value
+    AdvertiserID = cell_AdvertiserID.value
 
-        sheet_id = checkingsheets(spreadsheet_ID, AdvertiserName) # Checks if there is a Spreadsheet for each Advertiser. Also checks it there are the 2 needed sheets ("Assistant Sheet" and "Input Awin Publisher") and if necessary creates them.
-        rowcount = checkrows(spreadsheet_ID) # Checks the number of rows and if headers already exist.
+    sheet_id = checkingsheets(spreadsheet_ID, AdvertiserName) # Checks if there is a Spreadsheet for each Advertiser. Also checks it there are the 2 needed sheets ("Assistant Sheet" and "Input Awin Publisher") and if necessary creates them.
+    rowcount = checkrows(spreadsheet_ID) # Checks the number of rows and if headers already exist.
 
-    # Exports data from the previous month
+# Exports data from the previous month
 
-        exportreport(AdvertiserName, AdvertiserID, spreadsheet_ID)
-        print(str(AdvertiserName) + ": All exports and imports done")
-        countdown()
-    ##    except:
-    ##        print("Missing data in 'Setup.xlsx'. Skipping Advertiser.")
-    ##        continue
-        
-    print("All programs done.")
-
-if __name__ == "__main__":
-    main()
+    exportreport(AdvertiserName, AdvertiserID, spreadsheet_ID)
+    print(str(AdvertiserName) + ": All exports and imports done")
+    countdown()
+##    except:
+##        print("Missing data in 'Setup.xlsx'. Skipping Advertiser.")
+##        continue
+    
+print("All programs done.")
