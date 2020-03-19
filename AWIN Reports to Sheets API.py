@@ -317,9 +317,9 @@ def checkrows(spreadsheet_ID):
 def countdown():
     print("Starting next export in...")
     print("3")
-    sleep(3)
+    sleep(1)
     print("2")
-    sleep(2)
+    sleep(1)
     print("1")
     sleep(1)    
 
